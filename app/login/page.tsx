@@ -51,17 +51,17 @@ export default function LoginPage() {
   setLoading(true);
 
   try {
-    const result = await signIn("user-otp", {
+    // এখানে (result: any) দিয়ে টাইপ কাস্টিং করে দিন
+    const result: any = await signIn("user-otp", {
       email,
       code,
-      callbackUrl: "/dashboard", // সরাসরি এখানে রিডাইরেক্ট ইউআরএল বলে দিন
-      redirect: true,            // এটাকে true করে দিন
+      callbackUrl: "/dashboard",
+      redirect: true,
     });
 
-    // redirect: true থাকলে সাকসেস হলে পেজ অটোমেটিক চলে যাবে
-    // শুধু এরর হলে নিচের কোড কাজ করবে
+    // এখন টাইপস্ক্রিপ্ট আর 'never' নিয়ে চিল্লাইবে না
     if (result?.error) {
-      setMsg("কোড ভুল বা মেয়াদ শেষ — আবার চেষ্টা করুন।");
+      setMsg("কোড ভুল বা মেয়াদ শেষ — আবার চেষ্টা করুন।");
     }
   } catch {
     setMsg("লগইন ব্যর্থ");
