@@ -3,7 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import connectDB from "@/lib/db";
 import User from "@/models/User";
 import OtpToken from "@/models/OtpToken";
-import { hashOtp } from "@/lib/otp"; // সরাসরি hashOtp ইমপোর্ট করুন
+import { hashOtp } from "@/lib/otp";
 
 const MAX_OTP_ATTEMPTS = 8;
 
@@ -12,10 +12,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   secret: process.env.AUTH_SECRET,
   session: {
     strategy: "jwt",
-    maxAge: 7 * 24 * 60 * 60, // ৭ দিন সেশন থাকবে
+    maxAge: 7 * 24 * 60 * 60,
   },
   providers: [
-    // অ্যাডমিন লগইন (ইমেইল-পাসওয়ার্ড)
     Credentials({
       id: "admin",
       name: "Admin",
@@ -26,7 +25,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         const email = credentials?.email as string | undefined;
         const password = credentials?.password as string | undefined;
-
         if (!email || !password) return null;
 
         const adminEmail = (process.env.ADMIN_EMAIL || "").toLowerCase().trim();
@@ -36,18 +34,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           email.toLowerCase().trim() === adminEmail &&
           password === adminPass
         ) {
-          return {
-            id: "admin",
-            email,
-            name: "Admin",
-            role: "admin",
-          };
+          return { id: "admin", email, name: "Admin", role: "admin" };
         }
         return null;
       },
     }),
 
-    // ইউজার লগইন/রেজিস্ট্রেশন (ওটিপি)
     Credentials({
       id: "user-otp",
       name: "User OTP",
@@ -66,7 +58,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // ১. লেটেস্ট ওটিপি খুঁজে বের করা
         const doc = await OtpToken.findOne({ email }).sort({ createdAt: -1 });
 
-        // চেক: ওটিপি আছে কি না, মেয়াদ আছে কি না, বা বেশিবার ট্রাই করা হয়েছে কি না
+        // চেক: ওটিপি আছে কি না, মেয়াদ বা এটেম্পট লিমিট পার হয়েছে কি না
         if (
           !doc ||
           doc.expiresAt < new Date() ||
@@ -75,11 +67,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        // ২. ওটিপি ভেরিফাই করা (ইনপুট কোডকে হ্যাশ করে ডাটাবেজের codeHash এর সাথে ম্যাচ করা)
+        // ২. ওটিপি ভেরিফাই করা
         const hashedInput = hashOtp(code);
         if (hashedInput !== doc.codeHash) {
           await OtpToken.updateOne({ _id: doc._id }, { $inc: { attempts: 1 } });
-          return null; // কোড না মিললে এখান থেকেই রিটার্ন
+          return null;
         }
 
         // ৩. ইউজার হ্যান্ডলিং
@@ -90,25 +82,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             user = await User.create({
               email,
               name: doc.name || email.split("@")[0],
-              role: "user", // নিশ্চিত করুন রোল সেট হচ্ছে
+              role: "user",
               paymentStatus: "none",
             });
           }
         } else if (doc.intent === "login") {
-          if (!user) return null; // অ্যাকাউন্ট না থাকলে লগইন হবে না
+          if (!user) return null;
         }
 
-        // ৪. কাজ শেষ হলে ওটিপি ক্লিন করা
-        await OtpToken.deleteMany({ email });
+        // ৪. মেকানিক্যাল সেফটি: ওটিপি ডিলিট করার আগে ইউজার নিশ্চিত করা
+        if (user) {
+          // ওটিপি ডিলিট করে দেওয়া যাতে দ্বিতীয়বার ব্যবহার না হয়
+          await OtpToken.deleteMany({ email });
 
-        if (!user) return null;
+          return {
+            id: user._id.toString(),
+            email: user.email,
+            name: user.name,
+            role: "user",
+          };
+        }
 
-        return {
-          id: user._id.toString(),
-          email: user.email,
-          name: user.name,
-          role: "user",
-        };
+        return null;
       },
     }),
   ],

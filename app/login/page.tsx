@@ -45,6 +45,7 @@ export default function LoginPage() {
 
   async function verify(e: React.FormEvent) {
     e.preventDefault();
+    if (loading) return;
     setMsg(null);
     setLoading(true);
     try {
