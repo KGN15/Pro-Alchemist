@@ -12,9 +12,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   secret: process.env.AUTH_SECRET,
   session: {
     strategy: "jwt",
-    maxAge: 7 * 24 * 60 * 60,
+    maxAge: 7 * 24 * 60 * 60, // ৭ দিন সেশন
   },
   providers: [
+    // অ্যাডমিন লগইন
     Credentials({
       id: "admin",
       name: "Admin",
@@ -30,16 +31,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const adminEmail = (process.env.ADMIN_EMAIL || "").toLowerCase().trim();
         const adminPass = process.env.ADMIN_PASSWORD;
 
-        if (
-          email.toLowerCase().trim() === adminEmail &&
-          password === adminPass
-        ) {
+        if (email.toLowerCase().trim() === adminEmail && password === adminPass) {
           return { id: "admin", email, name: "Admin", role: "admin" };
         }
         return null;
       },
     }),
 
+    // ইউজার ওটিপি লগইন/রেজিস্ট্রেশন
     Credentials({
       id: "user-otp",
       name: "User OTP",
@@ -55,19 +54,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         await connectDB();
 
-        // ১. লেটেস্ট ওটিপি খুঁজে বের করা
-        const doc = await OtpToken.findOne({ email }).sort({ createdAt: -1 });
+        // ১. লেটেস্ট ওটিপি খুঁজে বের করা (যেটা এখনো ব্যবহৃত হয়নি)
+        const doc = await OtpToken.findOne({ 
+          email, 
+          used: { $ne: true } 
+        }).sort({ createdAt: -1 });
 
-        // চেক: ওটিপি আছে কি না, মেয়াদ বা এটেম্পট লিমিট পার হয়েছে কি না
-        if (
-          !doc ||
-          doc.expiresAt < new Date() ||
-          doc.attempts >= MAX_OTP_ATTEMPTS
-        ) {
+        // ভ্যালিডেশন চেক
+        if (!doc || doc.expiresAt < new Date() || doc.attempts >= MAX_OTP_ATTEMPTS) {
           return null;
         }
 
-        // ২. ওটিপি ভেরিফাই করা
+        // ২. ওটিপি ভেরিফাই (ইনপুট হ্যাশ ম্যাচিং)
         const hashedInput = hashOtp(code);
         if (hashedInput !== doc.codeHash) {
           await OtpToken.updateOne({ _id: doc._id }, { $inc: { attempts: 1 } });
@@ -87,19 +85,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             });
           }
         } else if (doc.intent === "login") {
-          if (!user) return null;
+          if (!user) return null; // ইউজার না থাকলে লগইন হবে না
         }
 
-        // ৪. মেকানিক্যাল সেফটি: ওটিপি ডিলিট করার আগে ইউজার নিশ্চিত করা
+        // ৪. ওটিপি ডিলিট না করে ব্যবহৃত মার্ক করা (যাতে সেশন রিকোয়েস্ট ফেইল না হয়)
         if (user) {
-          // ওটিপি ডিলিট করে দেওয়া যাতে দ্বিতীয়বার ব্যবহার না হয়
-          await OtpToken.deleteMany({ email });
+          // এটাকে আপডেট করা সেফ, কারণ এতে সেশন ক্রিয়েশনের সময় ডেটা হারায় না
+          await OtpToken.updateOne({ _id: doc._id }, { $set: { used: true } });
 
           return {
             id: user._id.toString(),
             email: user.email,
             name: user.name,
-            role: "user",
+            role: user.role || "user", // ইউজার রোল এনশিওর করা
           };
         }
 
@@ -110,8 +108,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        token.role = (user as any).role;
+        token.role = (user as any).role || "user";
         token.sub = user.id;
       }
       return token;
@@ -119,7 +116,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async session({ session, token }) {
       if (session.user) {
         session.user.id = (token.sub as string) || "";
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (session.user as any).role = (token.role as string) || "user";
       }
       return session;

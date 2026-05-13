@@ -44,28 +44,30 @@ export default function LoginPage() {
   }
 
   async function verify(e: React.FormEvent) {
-    e.preventDefault();
-    if (loading) return;
-    setMsg(null);
-    setLoading(true);
-    try {
-      const result = await signIn("user-otp", {
-        email,
-        code,
-        redirect: false,
-      });
-      if (result?.error) {
-        setMsg("কোড ভুল বাকি নেই — আবার চেষ্টা করুন।");
-        return;
-      }
-      router.replace("/dashboard");
-      router.refresh();
-    } catch {
-      setMsg("লগইন ব্যর্থ");
-    } finally {
-      setLoading(false);
+  e.preventDefault();
+  if (loading) return;
+  setMsg(null);
+  setLoading(true);
+
+  try {
+    const result = await signIn("user-otp", {
+      email,
+      code,
+      callbackUrl: "/dashboard", // সরাসরি এখানে রিডাইরেক্ট ইউআরএল বলে দিন
+      redirect: true,            // এটাকে true করে দিন
+    });
+
+    // redirect: true থাকলে সাকসেস হলে পেজ অটোমেটিক চলে যাবে
+    // শুধু এরর হলে নিচের কোড কাজ করবে
+    if (result?.error) {
+      setMsg("কোড ভুল বা মেয়াদ শেষ — আবার চেষ্টা করুন।");
     }
+  } catch {
+    setMsg("লগইন ব্যর্থ");
+  } finally {
+    setLoading(false);
   }
+}
 
   return (
    <div className="flex min-h-screen flex-col items-center justify-center bg-[#0a0a0a] px-4 py-16 text-zinc-100 selection:bg-red-500/30">
