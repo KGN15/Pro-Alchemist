@@ -23,7 +23,7 @@ const nextConfig: NextConfig = {
             // এখানে style-src এবং script-src এ 'unsafe-inline' যোগ করা হয়েছে
             // এবং img-src এ data: যোগ করা হয়েছে SVG এর জন্য
             value:
-              "default-src 'self'; img-src 'self' data: https://img.youtube.com; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none';",
+              "default-src 'self'; img-src 'self' data: https://img.youtube.com; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self' https://proalchemist.qzz.io; frame-ancestors 'none';",
           },
           {
             key: "Permissions-Policy",
