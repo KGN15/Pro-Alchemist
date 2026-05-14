@@ -14,16 +14,16 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/(.*)",
-
         headers: [
           { key: "X-Frame-Options", value: "DENY" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           {
-            image: true,
             key: "Content-Security-Policy",
+            // এখানে style-src এবং script-src এ 'unsafe-inline' যোগ করা হয়েছে
+            // এবং img-src এ data: যোগ করা হয়েছে SVG এর জন্য
             value:
-              "default-src 'self'; img-src 'self' https://img.youtube.com; script-src 'self'; style-src 'self'; font-src 'self'; connect-src 'self'; frame-ancestors 'none';",
+              "default-src 'self'; img-src 'self' data: https://img.youtube.com; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none';",
           },
           {
             key: "Permissions-Policy",
