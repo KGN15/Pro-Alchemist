@@ -22,8 +22,15 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             // এখানে style-src এবং script-src এ 'unsafe-inline' যোগ করা হয়েছে
             // এবং img-src এ data: যোগ করা হয়েছে SVG এর জন্য
-            value:
-              "default-src 'self'; img-src 'self' data: https://img.youtube.com; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self' https://proalchemist.qzz.io; frame-ancestors 'none';",
+            // Content-Security-Policy এর value হিসেবে এটি ব্যবহার করুন
+value: "default-src 'self'; " +
+       "img-src 'self' data: https://img.youtube.com; " +
+       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.youtube.com https://s.ytimg.com; " + // ইউটিউব স্ক্রিপ্ট এলাও করা হয়েছে
+       "style-src 'self' 'unsafe-inline'; " +
+       "font-src 'self' data:; " +
+       "connect-src 'self' https://proalchemist.qzz.io; " +
+       "frame-src 'self' https://www.youtube.com; " + // ইউটিউব ভিডিও আইফ্রেম এলাও করা হয়েছে
+       "frame-ancestors 'none';"
           },
           {
             key: "Permissions-Policy",
