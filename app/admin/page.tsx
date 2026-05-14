@@ -345,8 +345,10 @@ export default function AdminHomePage() {
                     <div className="relative h-12 w-20 overflow-hidden rounded-lg bg-black border border-white/5">
                         <Image 
                             src={`https://img.youtube.com/vi/${v.videoId}/mqdefault.jpg`} 
-                            alt="thumb" 
-                            className="h-full w-full object-cover opacity-60"
+                        alt="thumb"
+                        width={100}
+                        height={60}
+                        className="object-cover opacity-60"
                         />
                         <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white">
                             {v.sortOrder}

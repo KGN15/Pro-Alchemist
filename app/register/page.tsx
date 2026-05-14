@@ -47,6 +47,7 @@ export default function RegisterPage() {
 
   async function verify(e: React.FormEvent) {
     e.preventDefault();
+    if (loading) return; // Prevent multiple submissions
     setMsg(null);
     setLoading(true);
     try {
@@ -57,13 +58,16 @@ export default function RegisterPage() {
       });
       if (result?.error) {
         setMsg("কোড ভুল বা মেয়াদ শেষ।");
+        setLoading(false);
         return;
       }
-      router.replace("/dashboard");
-      router.refresh();
-    } catch {
+      if (result?.ok) {
+        // Session is now established, redirect to dashboard
+        router.push("/dashboard");
+      }
+    } catch (error) {
+      console.error(error);
       setMsg("ব্যর্থ হয়েছে");
-    } finally {
       setLoading(false);
     }
   }
