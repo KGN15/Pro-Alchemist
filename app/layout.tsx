@@ -25,11 +25,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: "ক্যাপকাট প্রো — মাসে মাসে ২০০৳ নষ্ট করা বন্ধ করুন!",
     description: "নিজের আইডিতে ক্যাপকাট প্রো ফিচার ব্যবহার করার সিক্রেট মেথড। ১০০% নিরাপদ ও ভাইরাস মুক্ত।",
-    url: "https://proalchemist.qzz.io", // এখানে আপনার আসল ডোমেইন দিন
+    url: "https://proalchemist.qzz.io", 
     siteName: "Pro Alchemist",
     images: [
       {
-        url: "/og-image.png", // আপনার পাবলিক ফোল্ডারে একটি সুন্দর প্রিভিউ ইমেজ রাখুন
+        url: "/og-image.png", 
         width: 1200,
         height: 630,
         alt: "Pro Alchemist CapCut Method",
